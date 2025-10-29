@@ -1,0 +1,35 @@
+{
+	"name": "quick-ai-backend",
+	"version": "1.0.0",
+	"main": "dist/index.js",
+	"scripts": {
+		"dev": "concurrently \"tsc --watch\" \"node --watch .\"",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"type": "commonjs",
+	"description": "",
+	"devDependencies": {
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.4",
+		"@types/multer": "^2.0.0",
+		"@types/node": "^24.9.1",
+		"concurrently": "^9.2.1",
+		"typescript": "^5.9.3"
+	},
+	"dependencies": {
+		"@clerk/express": "^1.7.42",
+		"@neondatabase/serverless": "^1.0.2",
+		"axios": "^1.12.2",
+		"cloudinary": "^2.8.0",
+		"cors": "^2.8.5",
+		"dotenv": "^17.2.3",
+		"express": "^5.1.0",
+		"i": "^0.3.7",
+		"multer": "^2.0.2",
+		"npm": "^11.6.2",
+		"openai": "^6.7.0"
+	}
+}
