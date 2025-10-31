@@ -9,6 +9,7 @@ import { envConfig } from "../../config/envConfig";
 
 import { uploadPhoto } from "../../util/cloud";
 import { v2 } from "cloudinary";
+import { readFileSync } from "node:fs";
 
 class AiService {
 	generateArticle = async (req: Request, res: Response) => {
@@ -163,6 +164,37 @@ class AiService {
 			message: "your object has removed successfully",
 			success: true,
 			image: imageUrl,
+		});
+	};
+
+	// Review Resume
+	reviewResume = async (req: Request, res: Response) => {
+		const { userId } = getAuth(req);
+		const plan = req.plan;
+		const resume = req.file;
+
+		if (plan !== "premium")
+			throw new AppError("You need to upgrade your plan", 403);
+		if (!resume) throw new AppError("Can't get file", 400);
+		if (resume.size > 4 * 1024 * 1024 || resume.mimetype !== "pdf")
+			throw new AppError("Max file size is 4 MB, and .pdf", 400);
+		const file = readFileSync(resume!.path, { encoding: "utf-8" });
+
+		const prompt = `Review the following resume and provide constructive feedback on its strengthen, weaknesses, and areas for improvements. resume content: \n\n ${file}`;
+
+		const response = await AI.chat.completions.create({
+			model: "gemini-2.0-flash",
+			messages: [{ role: "user", content: prompt }],
+			temperature: 0.7,
+			max_completion_tokens: 1000,
+		});
+
+		const content = response.choices[0]?.message.content;
+		await connect()`INSERT INTO creations (user_id,prompt,content,type) VALUES (${userId},${prompt},${content},'Review Resume')`;
+		return res.status(200).json({
+			message: "Your resume has been reviewed",
+			success: true,
+			content,
 		});
 	};
 }

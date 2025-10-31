@@ -11,6 +11,7 @@ const axios_1 = __importDefault(require("axios"));
 const envConfig_1 = require("../../config/envConfig");
 const cloud_1 = require("../../util/cloud");
 const cloudinary_1 = require("cloudinary");
+const node_fs_1 = require("node:fs");
 class AiService {
     generateArticle = async (req, res) => {
         const { prompt, length } = req.body;
@@ -125,6 +126,33 @@ class AiService {
             message: "your object has removed successfully",
             success: true,
             image: imageUrl,
+        });
+    };
+    // Review Resume
+    reviewResume = async (req, res) => {
+        const { userId } = (0, express_1.getAuth)(req);
+        const plan = req.plan;
+        const resume = req.file;
+        if (plan !== "premium")
+            throw new error_1.AppError("You need to upgrade your plan", 403);
+        if (!resume)
+            throw new error_1.AppError("Can't get file", 400);
+        if (resume.size > 4 * 1024 * 1024 || resume.mimetype !== "pdf")
+            throw new error_1.AppError("Max file size is 4 MB, and .pdf", 400);
+        const file = (0, node_fs_1.readFileSync)(resume.path, { encoding: "utf-8" });
+        const prompt = `Review the following resume and provide constructive feedback on its strengthen, weaknesses, and areas for improvements. resume content: \n\n ${file}`;
+        const response = await ai_1.AI.chat.completions.create({
+            model: "gemini-2.0-flash",
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.7,
+            max_completion_tokens: 1000,
+        });
+        const content = response.choices[0]?.message.content;
+        await (0, DB_1.connect)() `INSERT INTO creations (user_id,prompt,content,type) VALUES (${userId},${prompt},${content},'Review Resume')`;
+        return res.status(200).json({
+            message: "Your resume has been reviewed",
+            success: true,
+            content,
         });
     };
 }

@@ -1,3 +1,4 @@
 import aiRouter from "./ai/ai.controller";
-export { aiRouter };
+import userRouter from "./user/user.controller";
+export { aiRouter, userRouter };
 //# sourceMappingURL=index.d.ts.map

@@ -5,6 +5,7 @@ declare class AiService {
     generateImage: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
     removeBackground: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
     removeObject: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
+    reviewResume: (req: Request, res: Response) => Promise<Response<any, Record<string, any>>>;
 }
 declare const _default: AiService;
 export default _default;
