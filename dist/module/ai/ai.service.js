@@ -74,10 +74,10 @@ class AiService {
             responseType: "arraybuffer",
         });
         const base64Image = `data:image/png;base64,${Buffer.from(response.data, "binary").toString("base64")}`;
-        const path = published ? `public` : `privet/${userId}/images`;
+        const path = published ? `public` : `private/${userId}/images`;
         const photoData = await (0, cloud_1.uploadPhoto)(base64Image, path);
         await (0, DB_1.connect)() `INSERT INTO creations (user_id,prompt,content,type,published) VALUES (${userId},${prompt},${JSON.stringify(photoData)},'image',${published ?? false})`;
-        return res.json(201).json({
+        return res.status(201).json({
             message: "generated image success",
             success: true,
             content: photoData.secure_url,
@@ -91,7 +91,7 @@ class AiService {
             throw new error_1.AppError("you need to upgrade your plan", 403);
         if (!req.file)
             throw new error_1.AppError("No file uploaded", 400);
-        const { secure_url, public_id } = await (0, cloud_1.uploadPhoto)(req.file.path, `privet/${userId}/remove-background`, {
+        const { secure_url, public_id } = await (0, cloud_1.uploadPhoto)(req.file.path, `private/${userId}/remove-background`, {
             transformation: [
                 {
                     effect: "background_removal",
@@ -115,7 +115,7 @@ class AiService {
         if (!req.file)
             throw new error_1.AppError("No file uploaded", 400);
         const { object } = req.body;
-        const { secure_url, public_id } = await (0, cloud_1.uploadPhoto)(req.file.path, `privet/${userId}/remove-object`);
+        const { secure_url, public_id } = await (0, cloud_1.uploadPhoto)(req.file.path, `private/${userId}/remove-object`);
         const imageUrl = cloudinary_1.v2.url(public_id, {
             transformation: [{ effect: `gen_remove:${object}` }],
             resource_type: "image",

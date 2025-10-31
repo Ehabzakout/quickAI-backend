@@ -18,4 +18,9 @@ router.post(
 	uploadFile.single("image"),
 	aiService.removeObject
 );
+router.post(
+	"/review-resume",
+	uploadFile.single("resume"),
+	aiService.removeObject
+);
 export default router;

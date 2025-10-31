@@ -95,13 +95,13 @@ class AiService {
 			response.data,
 			"binary"
 		).toString("base64")}`;
-		const path = published ? `public` : `privet/${userId}/images`;
+		const path = published ? `public` : `private/${userId}/images`;
 		const photoData = await uploadPhoto(base64Image, path);
 
 		await connect()`INSERT INTO creations (user_id,prompt,content,type,published) VALUES (${userId},${prompt},${JSON.stringify(
 			photoData
 		)},'image',${published ?? false})`;
-		return res.json(201).json({
+		return res.status(201).json({
 			message: "generated image success",
 			success: true,
 			content: photoData.secure_url,
@@ -117,7 +117,7 @@ class AiService {
 		if (!req.file) throw new AppError("No file uploaded", 400);
 		const { secure_url, public_id } = await uploadPhoto(
 			req.file.path,
-			`privet/${userId}/remove-background`,
+			`private/${userId}/remove-background`,
 			{
 				transformation: [
 					{
@@ -149,7 +149,7 @@ class AiService {
 		const { object } = req.body;
 		const { secure_url, public_id } = await uploadPhoto(
 			req.file.path,
-			`privet/${userId}/remove-object`
+			`private/${userId}/remove-object`
 		);
 		const imageUrl = v2.url(public_id, {
 			transformation: [{ effect: `gen_remove:${object}` }],

@@ -13,4 +13,5 @@ router.post("/generate-title", ai_service_1.default.generateTitle);
 router.post("/generate-image", ai_service_1.default.generateImage);
 router.post("/remove-background", multer_1.uploadFile.single("image"), ai_service_2.default.removeBackground);
 router.post("/remove-object", multer_1.uploadFile.single("image"), ai_service_2.default.removeObject);
+router.post("/review-resume", multer_1.uploadFile.single("resume"), ai_service_2.default.removeObject);
 exports.default = router;
