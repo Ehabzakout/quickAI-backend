@@ -59,5 +59,37 @@ git clone https://github.com/Ehabzakout/quickAI-backend.git
 
 cd quickAi-backend
 
-npm run dev
 ```
+
+### 2️⃣ Install dependencies and run
+
+```bash
+npm install
+
+npm run dev
+
+```
+
+### 3️⃣ Configure Environment Variables
+
+# Clerk
+
+CLERK_PUBLISHABLE_KEY= your_clerk_key
+CLERK_SECRET_KEY= your_clerk_secret
+
+# Database
+
+DATABASE_URL = you database link
+PORT = 3000
+
+# AI openAI, clip drop
+
+AI_API_KEY = your openAi key
+CLIP_DROP_KEY = your clip drop key
+CLIP_DROP_API = your clip drop api key
+
+# cloudinary Configuration
+
+CLOUDINARY_SECRET = your cloudinary secret key
+CLOUDINARY_API_KEY= your cloudinary api key
+CLOUD_NAME= your cloudinary name
