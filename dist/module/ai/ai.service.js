@@ -12,6 +12,7 @@ const envConfig_1 = require("../../config/envConfig");
 const cloud_1 = require("../../util/cloud");
 const cloudinary_1 = require("cloudinary");
 const node_fs_1 = require("node:fs");
+const pdf_parse_1 = require("pdf-parse");
 class AiService {
     generateArticle = async (req, res) => {
         const { prompt, length } = req.body;
@@ -75,12 +76,12 @@ class AiService {
         });
         const base64Image = `data:image/png;base64,${Buffer.from(response.data, "binary").toString("base64")}`;
         const path = published ? `public` : `private/${userId}/images`;
-        const photoData = await (0, cloud_1.uploadPhoto)(base64Image, path);
-        await (0, DB_1.connect)() `INSERT INTO creations (user_id,prompt,content,type,published) VALUES (${userId},${prompt},${JSON.stringify(photoData)},'image',${published ?? false})`;
+        const { secure_url } = await (0, cloud_1.uploadPhoto)(base64Image, path);
+        await (0, DB_1.connect)() `INSERT INTO creations (user_id,prompt,content,type,published) VALUES (${userId},${prompt},${secure_url},'image',${published ?? false})`;
         return res.status(201).json({
             message: "generated image success",
             success: true,
-            content: photoData.secure_url,
+            content: secure_url,
             public: published,
         });
     };
@@ -137,10 +138,12 @@ class AiService {
             throw new error_1.AppError("You need to upgrade your plan", 403);
         if (!resume)
             throw new error_1.AppError("Can't get file", 400);
-        if (resume.size > 4 * 1024 * 1024 || resume.mimetype !== "pdf")
+        if (resume.size > 4 * 1024 * 1024 || resume.mimetype !== "application/pdf")
             throw new error_1.AppError("Max file size is 4 MB, and .pdf", 400);
-        const file = (0, node_fs_1.readFileSync)(resume.path, { encoding: "utf-8" });
-        const prompt = `Review the following resume and provide constructive feedback on its strengthen, weaknesses, and areas for improvements. resume content: \n\n ${file}`;
+        const bufferFile = (0, node_fs_1.readFileSync)(resume.path);
+        const file = new pdf_parse_1.PDFParse({ data: bufferFile });
+        const result = await file.getText();
+        const prompt = `Review the following resume and provide constructive feedback on its strengthen, weaknesses, and areas for improvements. resume content: \n\n ${result.text}`;
         const response = await ai_1.AI.chat.completions.create({
             model: "gemini-2.0-flash",
             messages: [{ role: "user", content: prompt }],
@@ -148,7 +151,7 @@ class AiService {
             max_completion_tokens: 1000,
         });
         const content = response.choices[0]?.message.content;
-        await (0, DB_1.connect)() `INSERT INTO creations (user_id,prompt,content,type) VALUES (${userId},${prompt},${content},'Review Resume')`;
+        await (0, DB_1.connect)() `INSERT INTO creations (user_id,prompt,content,type) VALUES (${userId},${prompt},${content},'Resume')`;
         return res.status(200).json({
             message: "Your resume has been reviewed",
             success: true,

@@ -10,7 +10,7 @@ import { envConfig } from "../../config/envConfig";
 import { uploadPhoto } from "../../util/cloud";
 import { v2 } from "cloudinary";
 import { readFileSync } from "node:fs";
-
+import { PDFParse } from "pdf-parse";
 class AiService {
 	generateArticle = async (req: Request, res: Response) => {
 		const { prompt, length } = req.body;
@@ -96,15 +96,15 @@ class AiService {
 			"binary"
 		).toString("base64")}`;
 		const path = published ? `public` : `private/${userId}/images`;
-		const photoData = await uploadPhoto(base64Image, path);
+		const { secure_url } = await uploadPhoto(base64Image, path);
 
-		await connect()`INSERT INTO creations (user_id,prompt,content,type,published) VALUES (${userId},${prompt},${JSON.stringify(
-			photoData
-		)},'image',${published ?? false})`;
+		await connect()`INSERT INTO creations (user_id,prompt,content,type,published) VALUES (${userId},${prompt},${secure_url},'image',${
+			published ?? false
+		})`;
 		return res.status(201).json({
 			message: "generated image success",
 			success: true,
-			content: photoData.secure_url,
+			content: secure_url,
 			public: published,
 		});
 	};
@@ -176,11 +176,14 @@ class AiService {
 		if (plan !== "premium")
 			throw new AppError("You need to upgrade your plan", 403);
 		if (!resume) throw new AppError("Can't get file", 400);
-		if (resume.size > 4 * 1024 * 1024 || resume.mimetype !== "pdf")
+		if (resume.size > 4 * 1024 * 1024 || resume.mimetype !== "application/pdf")
 			throw new AppError("Max file size is 4 MB, and .pdf", 400);
-		const file = readFileSync(resume!.path, { encoding: "utf-8" });
+		const bufferFile = readFileSync(resume!.path);
+		const file = new PDFParse({ data: bufferFile });
 
-		const prompt = `Review the following resume and provide constructive feedback on its strengthen, weaknesses, and areas for improvements. resume content: \n\n ${file}`;
+		const result = await file.getText();
+
+		const prompt = `Review the following resume and provide constructive feedback on its strengthen, weaknesses, and areas for improvements. resume content: \n\n ${result.text}`;
 
 		const response = await AI.chat.completions.create({
 			model: "gemini-2.0-flash",
@@ -190,7 +193,7 @@ class AiService {
 		});
 
 		const content = response.choices[0]?.message.content;
-		await connect()`INSERT INTO creations (user_id,prompt,content,type) VALUES (${userId},${prompt},${content},'Review Resume')`;
+		await connect()`INSERT INTO creations (user_id,prompt,content,type) VALUES (${userId},${prompt},${content},'Resume')`;
 		return res.status(200).json({
 			message: "Your resume has been reviewed",
 			success: true,

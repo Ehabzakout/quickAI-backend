@@ -21,6 +21,6 @@ router.post(
 router.post(
 	"/review-resume",
 	uploadFile.single("resume"),
-	aiService.removeObject
+	aiService.reviewResume
 );
 export default router;
